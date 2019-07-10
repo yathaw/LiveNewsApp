@@ -1,5 +1,6 @@
 package com.example.live.fragment;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
@@ -22,10 +23,13 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.live.R;
 import com.example.live.adapter.TechcrunchAdapter;
+import com.example.live.adapter.TopheadlineAdapter;
 import com.example.live.api.ApiClient;
 import com.example.live.api.ApiInterface;
 import com.example.live.models.techcrunch.ArticlesItem;
 import com.example.live.models.techcrunch.Techcrunch;
+import com.example.live.models.topheadline.News;
+import com.example.live.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,14 +44,17 @@ public class TopheadlinesFragment extends Fragment implements SwipeRefreshLayout
 {
     public static final String API_KEY = "c227cbd759164c75979e47249b3b93c4";
 
-    private RecyclerView techcrunch_recyclerView;
+    private RecyclerView techcrunch_recyclerView, topheadlines_recyclerView;
     private List<ArticlesItem> techarticlesItems = new ArrayList<>();
+    private List<com.example.live.models.topheadline.ArticlesItem> topheadlinesarticlesItems = new ArrayList<>();
     private TechcrunchAdapter techcrunchAdapter;
+    private TopheadlineAdapter topheadlineAdapter;
     private Activity context;
     private SwipeRefreshLayout swipeRefreshLayout;
     private RelativeLayout errorLayout;
     private ImageView errorImage;
-    private TextView errorTitle, errorMessage, techcrunch_title, techcrunch_start_divider;
+    private TextView errorTitle, errorMessage, techcrunch_title, topheadlines_title  ;
+    private View techcrunch_start_divider, topheadlines_start_divider;
     private Button btnRetry, bthShare;
     private Timer timer;
     private int position =0;
@@ -55,6 +62,7 @@ public class TopheadlinesFragment extends Fragment implements SwipeRefreshLayout
 
 
 
+    @SuppressLint("WrongConstant")
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState)
@@ -67,17 +75,34 @@ public class TopheadlinesFragment extends Fragment implements SwipeRefreshLayout
 
 
         // Techcrunch Recycler View
-        techcrunch_recyclerView = rootview.findViewById(R.id.htechcrunch_recycler_view);
+        techcrunch_recyclerView = rootview.findViewById(R.id.techcrunch_recycler_view);
         LinearLayoutManager techcrunch_layoutManager = new LinearLayoutManager(getActivity());
         techcrunch_layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
         techcrunch_recyclerView.setLayoutManager(techcrunch_layoutManager);
+        techcrunch_recyclerView.setAdapter(techcrunchAdapter);
         techcrunch_recyclerView.setItemAnimator(new DefaultItemAnimator());
         techcrunch_recyclerView.setNestedScrollingEnabled(false);
 
+        // Top Head Line Recycler View
+        topheadlines_recyclerView = rootview.findViewById(R.id.topheadlines_recyclerView);
+        LinearLayoutManager topheadlines_layoutManager = new LinearLayoutManager(getActivity());
+        topheadlines_layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        topheadlines_recyclerView.setLayoutManager(topheadlines_layoutManager);
+        topheadlines_recyclerView.setAdapter(topheadlineAdapter);
+        topheadlines_recyclerView.setItemAnimator(new DefaultItemAnimator());
+        topheadlines_recyclerView.setNestedScrollingEnabled(false);
+
 
         TechcrunchOnLoadingSwipeRefresh();
+        TopheadlineOnLoadingSwipeRefresh();
 
         techcrunch_title = rootview.findViewById(R.id.techcrunch_title);
+        techcrunch_start_divider = rootview.findViewById(R.id.techcrunch_start_divider);
+
+        topheadlines_title = rootview.findViewById(R.id.topheadlines_title);
+        topheadlines_start_divider = rootview.findViewById(R.id.topheadlines_start_divider);
+
+
         context = getActivity();
 
 
@@ -95,6 +120,55 @@ public class TopheadlinesFragment extends Fragment implements SwipeRefreshLayout
                     }
                 }
         );
+    }
+
+    private void TopheadlineOnLoadingSwipeRefresh()
+    {
+        swipeRefreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                LoadTopheadline();
+            }
+        });
+    }
+
+    public void LoadTopheadline()
+    {
+        swipeRefreshLayout.setRefreshing(true);
+
+        ApiInterface apiInterface = ApiClient.getApiClient().create(ApiInterface.class);
+        String sources = String.valueOf("us");
+
+        Call<News> call;
+        call = apiInterface.getNews(sources, API_KEY);
+
+        call.enqueue(new Callback<News>() {
+            @Override
+            public void onResponse(Call<News> call, Response<News> response)
+            {
+                if (response.isSuccessful() && response.body().getArticles() != null)
+                {
+                    if (!topheadlinesarticlesItems.isEmpty())
+                    {
+                        topheadlinesarticlesItems.clear();
+                    }
+                    topheadlinesarticlesItems = response.body().getArticles();
+                    topheadlineAdapter = new TopheadlineAdapter(topheadlinesarticlesItems);
+
+                    techcrunch_recyclerView.setAdapter(topheadlineAdapter);
+                    topheadlineAdapter.notifyDataSetChanged();
+
+                    swipeRefreshLayout.setRefreshing(false);
+                    topheadlines_title.setVisibility(View.VISIBLE);
+                    topheadlines_start_divider.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<News> call, Throwable t) {
+
+            }
+        });
     }
 
     public void LoadTechcrunch()
@@ -127,6 +201,7 @@ public class TopheadlinesFragment extends Fragment implements SwipeRefreshLayout
 
                     swipeRefreshLayout.setRefreshing(false);
                     techcrunch_title.setVisibility(View.VISIBLE);
+                    techcrunch_start_divider.setVisibility(View.VISIBLE);
 
                     Timer timer = new Timer();
                     timer.scheduleAtFixedRate(new SliderTimer(), 4000, 6000);
@@ -190,6 +265,10 @@ public class TopheadlinesFragment extends Fragment implements SwipeRefreshLayout
             {
                 swipeRefreshLayout.setRefreshing(false);
                 techcrunch_title.setVisibility(View.INVISIBLE);
+                techcrunch_start_divider.setVisibility(View.INVISIBLE);
+
+                topheadlines_title.setVisibility(View.INVISIBLE);
+                topheadlines_start_divider.setVisibility(View.INVISIBLE);
 
                 String errorCode;
                 switch (call.hashCode()) {

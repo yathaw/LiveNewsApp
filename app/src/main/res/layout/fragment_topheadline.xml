@@ -61,7 +61,7 @@
                             android:visibility="invisible"/>
 
                         <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/htechcrunch_recycler_view"
+                            android:id="@+id/techcrunch_recycler_view"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_below="@id/techcrunch_title"
