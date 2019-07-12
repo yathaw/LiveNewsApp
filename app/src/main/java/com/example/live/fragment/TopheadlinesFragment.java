@@ -2,9 +2,8 @@ package com.example.live.fragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.example.live.TopheadlineDetailActivity;
 import com.example.live.R;
 import com.example.live.adapter.TechcrunchAdapter;
 import com.example.live.adapter.TopheadlineAdapter;
@@ -29,7 +29,6 @@ import com.example.live.api.ApiInterface;
 import com.example.live.models.techcrunch.ArticlesItem;
 import com.example.live.models.techcrunch.Techcrunch;
 import com.example.live.models.topheadline.News;
-import com.example.live.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +57,7 @@ public class TopheadlinesFragment extends Fragment implements SwipeRefreshLayout
     private Button btnRetry, bthShare;
     private Timer timer;
     private int position =0;
+    private boolean end;
 
 
 
@@ -153,19 +153,49 @@ public class TopheadlinesFragment extends Fragment implements SwipeRefreshLayout
                         topheadlinesarticlesItems.clear();
                     }
                     topheadlinesarticlesItems = response.body().getArticles();
-                    topheadlineAdapter = new TopheadlineAdapter(topheadlinesarticlesItems);
+                    topheadlineAdapter = new TopheadlineAdapter(topheadlinesarticlesItems,context,topheadlines_recyclerView);
 
-                    techcrunch_recyclerView.setAdapter(topheadlineAdapter);
+                    topheadlines_recyclerView.setAdapter(topheadlineAdapter);
                     topheadlineAdapter.notifyDataSetChanged();
 
                     swipeRefreshLayout.setRefreshing(false);
+
                     topheadlines_title.setVisibility(View.VISIBLE);
                     topheadlines_start_divider.setVisibility(View.VISIBLE);
+
+                    topheadlines_initListener();
+
                 }
             }
 
             @Override
-            public void onFailure(Call<News> call, Throwable t) {
+            public void onFailure(Call<News> call, Throwable t)
+            {
+                swipeRefreshLayout.setRefreshing(false);
+                topheadlines_title.setVisibility(View.INVISIBLE);
+                topheadlines_start_divider.setVisibility(View.INVISIBLE);
+
+                String errorCode;
+                switch (call.hashCode()) {
+                    case 404:
+                        errorCode = "404 Not found";
+                        break;
+
+                    case 500:
+                        errorCode = "500 server broken";
+                        break;
+
+                    default:
+                        errorCode = "unknown error";
+                        break;
+                }
+
+                showErrorMessage(
+                        R.drawable.nosearchresult,
+                        "No Result",
+                        "Please try again!\n"+
+                                errorCode
+                );
 
             }
         });
@@ -204,9 +234,11 @@ public class TopheadlinesFragment extends Fragment implements SwipeRefreshLayout
                     techcrunch_start_divider.setVisibility(View.VISIBLE);
 
                     Timer timer = new Timer();
+//                    timer.scheduleAtFixedRate(new SliderTimer(), 4000, 6000);
+
                     timer.scheduleAtFixedRate(new SliderTimer(), 4000, 6000);
 
-//                    techcrunch_initListener();
+                    techcrunch_initListener();
                 }
             }
 
@@ -216,45 +248,33 @@ public class TopheadlinesFragment extends Fragment implements SwipeRefreshLayout
                 @Override
                 public void run()
                 {
-                    final boolean flag = true;
-                    final boolean[] end = new boolean[1];
-                    while (flag && (getActivity()!= null))
+                    Activity activity = getActivity();
+                    if (activity != null)
                     {
-                        try
-                        {
-                            Thread.sleep(6000);
-                            getActivity().runOnUiThread(new Runnable()
-                            {
-                                @Override
-                                public void run()
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if(position == techcrunchAdapter.getItemCount() -1 )
                                 {
-                                    if(position == techcrunchAdapter.getItemCount() -1 )
-                                    {
-                                        end[0] = true;
-                                    }
-                                    else if (position ==0)
-                                    {
-                                        end[0] = false;
-                                    }
-
-                                    if (!end[0])
-                                    {
-                                        position ++;
-                                    }
-                                    else
-                                    {
-                                        position --;
-                                    }
-                                    techcrunch_recyclerView.smoothScrollToPosition(position);
+                                    end = true;
                                 }
-                            });
-                        }
-                        catch (InterruptedException e)
-                        {
-                            e.printStackTrace();
-                        }
-                    }
+                                else if (position ==0)
+                                {
+                                    end = false;
+                                }
 
+                                if (!end)
+                                {
+                                    position ++;
+                                }
+                                else
+                                {
+                                    position --;
+                                }
+                                techcrunch_recyclerView.smoothScrollToPosition(position);
+                            }
+                        });
+                    }
                 }
             }
 
@@ -266,9 +286,6 @@ public class TopheadlinesFragment extends Fragment implements SwipeRefreshLayout
                 swipeRefreshLayout.setRefreshing(false);
                 techcrunch_title.setVisibility(View.INVISIBLE);
                 techcrunch_start_divider.setVisibility(View.INVISIBLE);
-
-                topheadlines_title.setVisibility(View.INVISIBLE);
-                topheadlines_start_divider.setVisibility(View.INVISIBLE);
 
                 String errorCode;
                 switch (call.hashCode()) {
@@ -295,6 +312,47 @@ public class TopheadlinesFragment extends Fragment implements SwipeRefreshLayout
         });
     }
 
+    private void techcrunch_initListener()
+    {
+        techcrunchAdapter.setOnItemClickListener(new TechcrunchAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                Intent intent = new Intent(context, TopheadlineDetailActivity.class);
+                ArticlesItem articlesItem = techarticlesItems.get(position);
+
+                intent.putExtra("url",articlesItem.getUrl());
+                intent.putExtra("title",articlesItem.getTitle());
+                intent.putExtra("img",articlesItem.getUrlToImage());
+                intent.putExtra("date",articlesItem.getPublishedAt());
+                intent.putExtra("source",articlesItem.getSource().getName());
+                intent.putExtra("author",articlesItem.getAuthor());
+
+                startActivity(intent);
+            }
+        });
+    }
+
+    private void topheadlines_initListener()
+    {
+        topheadlineAdapter.setOnItemClickListener(new TopheadlineAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position)
+            {
+                Intent intent = new Intent(context, TopheadlineDetailActivity.class);
+                com.example.live.models.topheadline.ArticlesItem articlesItem = topheadlinesarticlesItems.get(position);
+
+                intent.putExtra("url",articlesItem.getUrl());
+                intent.putExtra("title",articlesItem.getTitle());
+                intent.putExtra("img",articlesItem.getUrlToImage());
+                intent.putExtra("date",articlesItem.getPublishedAt());
+                intent.putExtra("source",articlesItem.getSource().getName());
+                intent.putExtra("author",articlesItem.getAuthor());
+
+                startActivity(intent);
+
+            }
+        });
+    }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState)
@@ -304,8 +362,10 @@ public class TopheadlinesFragment extends Fragment implements SwipeRefreshLayout
     }
 
     @Override
-    public void onRefresh() {
-
+    public void onRefresh()
+    {
+        LoadTopheadline();
+        LoadTechcrunch();
     }
 
     private void showErrorMessage(int imageView, String title, String message) {

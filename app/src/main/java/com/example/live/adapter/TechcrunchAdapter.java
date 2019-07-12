@@ -78,6 +78,11 @@ public class TechcrunchAdapter extends RecyclerView.Adapter<TechcrunchAdapter.My
         holder.title.setText(model.getTitle());
     }
 
+    public void setOnItemClickListener(TechcrunchAdapter.OnItemClickListener onItemClickListener)
+    {
+        this.onItemClickListener = onItemClickListener;
+    }
+
     @Override
     public int getItemCount()
     {

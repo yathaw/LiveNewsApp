@@ -7,12 +7,8 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.example.live.R;
 import com.example.live.models.Category;
@@ -32,7 +28,7 @@ public class CategoryAdapter extends ArrayAdapter<Category> implements View.OnCl
 
     public CategoryAdapter(ArrayList<Category> data, Context context)
     {
-        super(context, R.layout.categoryies_layout, data);
+        super(context, R.layout.categories_layout, data);
         this.dataSet = data;
         this.mContext = context;
     }
@@ -58,7 +54,7 @@ public class CategoryAdapter extends ArrayAdapter<Category> implements View.OnCl
         {
             viewHolder = new ViewHolder();
             LayoutInflater inflater = LayoutInflater.from(getContext());
-            convertView = inflater.inflate(R.layout.categoryies_layout, parent, false);
+            convertView = inflater.inflate(R.layout.categories_layout, parent, false);
 
             viewHolder.txtName = convertView.findViewById(R.id.txt_status);
             viewHolder.logo = convertView.findViewById(R.id.category_logo);

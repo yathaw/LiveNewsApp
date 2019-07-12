@@ -9,9 +9,11 @@
     android:layout_marginBottom="7dp"
     android:minHeight="200dp"
     app:cardElevation="2dp"
-    app:cardCornerRadius="10dp">
+    app:cardCornerRadius="10dp"
+    android:id="@+id/container">
 
     <RelativeLayout
+
         android:background="?android:attr/selectableItemBackground"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">

@@ -6,12 +6,16 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -32,16 +36,25 @@ public class TopheadlineAdapter extends RecyclerView.Adapter<TopheadlineAdapter.
 {
     private OnItemClickListener onItemClickListener;
     private List<ArticlesItem> topheadlinesarticlesItems;
+    private int lastPosition = -1;
     private Context context;
+    private View view;
 
     public interface OnItemClickListener
     {
         void onItemClick(View view, int position);
     }
 
-    public TopheadlineAdapter(List<ArticlesItem> topheadlinesarticlesItems)
+    public TopheadlineAdapter(List<ArticlesItem> topheadlinesarticlesItems, Context context, View view)
     {
         this.topheadlinesarticlesItems = topheadlinesarticlesItems;
+        this.context = context;
+        this.view = view;
+    }
+
+    public void setOnItemClickListener(OnItemClickListener onItemClickListener)
+    {
+        this.onItemClickListener = onItemClickListener;
     }
 
     @NonNull
@@ -84,14 +97,9 @@ public class TopheadlineAdapter extends RecyclerView.Adapter<TopheadlineAdapter.
                 .transition(DrawableTransitionOptions.withCrossFade())
                 .into(holder.imageView);
 
-
-        Log.d("Title", model.getTitle());
-
-
         holder.title.setText(model.getTitle());
         holder.author.setText(model.getSource().getName());
         holder.time.setText(Utils.DateToTimeFormat(model.getPublishedAt()));
-
 
     }
 
@@ -106,12 +114,14 @@ public class TopheadlineAdapter extends RecyclerView.Adapter<TopheadlineAdapter.
         ImageView imageView;
         OnItemClickListener onItemClickListener;
         ProgressBar progressBar;
+        CardView container;
 
         public MyViewHolder(@NonNull View itemView, OnItemClickListener onItemClickListener)
         {
             super(itemView);
             itemView.setOnClickListener(this);
 
+            container = itemView.findViewById(R.id.container);
             title = itemView.findViewById(R.id.title);
             author = itemView.findViewById(R.id.author);
             time = itemView.findViewById(R.id.time);

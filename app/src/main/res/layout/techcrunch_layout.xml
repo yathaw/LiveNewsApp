@@ -8,7 +8,7 @@
     android:layout_marginRight="11dp"
     android:layout_marginTop="7dp"
     android:layout_marginBottom="7dp"
-    android:minHeight="200dp"
+    android:minHeight="250dp"
     app:cardElevation="2dp"
     app:cardCornerRadius="10dp">
 
@@ -20,7 +20,7 @@
         <ImageView
             android:id="@+id/techcrunch_img"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_height="250dp"
             android:scaleType="centerCrop"
             android:adjustViewBounds="true"
             />
